@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinanceFlow</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <div id="telaLogin" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">FinanceFlow</span>
+      </div>
+      <h2 class="login-title">Bem-vindo de volta</h2>
+      <p class="login-sub">Faca login para acessar suas financas</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" class="form-input" placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="loginSenha" class="form-input" placeholder="••••••••">
+      </div>
+      <button onclick="fazerLogin()" class="btn btn-primary btn-full">Entrar</button>
+      <p class="login-error" id="loginErro"></p>
+    </div>
+  </div>
+
+  <!-- APP PRINCIPAL -->
+  <div id="appPrincipal" style="display:none;display:flex">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">◈</span>
+          <span class="logo-text">FinanceFlow</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">‹</button>
+      </div>
+
+      <div class="user-info" id="userInfo"></div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="navigate('dashboard', this)">
+          <span class="nav-icon">⬡</span><span class="nav-label">Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" onclick="navigate('transacoes', this)">
+          <span class="nav-icon">⇅</span><span class="nav-label">Transacoes</span>
+        </a>
+        <a href="#" class="nav-item" onclick="navigate('cartoes', this)">
+          <span class="nav-icon">▣</span><span class="nav-label">Cartoes</span>
+        </a>
+        <a href="#" class="nav-item" onclick="navigate('contas', this)">
+          <span class="nav-icon">◉</span><span class="nav-label">Contas</span>
+        </a>
+        <a href="#" class="nav-item" onclick="navigate('metas', this)">
+          <span class="nav-icon">◎</span><span class="nav-label">Metas</span>
+        </a>
+        <a href="#" class="nav-item" onclick="navigate('pagar-receber', this)">
+          <span class="nav-icon">⊞</span><span class="nav-label">A Pagar/Receber</span>
+        </a>
+        <a href="#" class="nav-item" onclick="navigate('relatorios', this)">
+          <span class="nav-icon">◫</span><span class="nav-label">Relatorios</span>
+        </a>
+        <a href="#" class="nav-item nav-admin" id="menuUsuarios" onclick="navigate('usuarios', this)" style="display:none">
+          <span class="nav-icon">◈</span><span class="nav-label">Usuarios</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button onclick="fazerLogout()" class="btn-logout">Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="page-title" id="pageTitle">Dashboard</h1>
+          <span class="conta-badge" id="contaBadge"></span>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-primary" id="btnNovaTransacao" onclick="abrirModal('modalTransacao')">+ Nova Transacao</button>
+        </div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div id="alertasAtraso" style="display:none;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+        <div class="cards-grid">
+          <div class="card card-receita">
+            <div class="card-icon">↑</div>
+            <div class="card-info">
+              <span class="card-label">Receitas do Mes</span>
+              <span class="card-value" id="resumoReceitas">R$ 0,00</span>
+            </div>
+          </div>
+          <div class="card card-despesa">
+            <div class="card-icon">↓</div>
+            <div class="card-info">
+              <span class="card-label">Despesas do Mes</span>
+              <span class="card-value" id="resumoDespesas">R$ 0,00</span>
+            </div>
+          </div>
+          <div class="card card-saldo">
+            <div class="card-icon">◈</div>
+            <div class="card-info">
+              <span class="card-label">Saldo do Mes</span>
+              <span class="card-value" id="resumoSaldo">R$ 0,00</span>
+            </div>
+          </div>
+          <div class="card card-total">
+            <div class="card-icon">⬡</div>
+            <div class="card-info">
+              <span class="card-label">Patrimonio Total</span>
+              <span class="card-value" id="resumoTotal">R$ 0,00</span>
+            </div>
+          </div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3 class="chart-title">Evolucao Mensal</h3>
+            <canvas id="chartMensal"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3 class="chart-title">Despesas por Categoria</h3>
+            <canvas id="chartCategorias"></canvas>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <h3>Ultimas Transacoes</h3>
+            <a href="#" onclick="navigate('transacoes', document.querySelector('[onclick*=transacoes]'))" class="link-ver-mais">Ver todas</a>
+          </div>
+          <div id="listaUltimasTransacoes"></div>
+        </div>
+      </div>
+
+      <!-- TRANSACOES -->
+      <div class="page" id="page-transacoes">
+        <div class="filters-bar">
+          <select id="filtroMes" onchange="carregarTransacoes()" class="filter-select"></select>
+          <select id="filtroTipo" onchange="carregarTransacoes()" class="filter-select">
+            <option value="">Todos os tipos</option>
+            <option value="receita">Receitas</option>
+            <option value="despesa">Despesas</option>
+          </select>
+          <select id="filtroCategoria" onchange="carregarTransacoes()" class="filter-select">
+            <option value="">Todas as categorias</option>
+          </select>
+        </div>
+        <div class="section-card">
+          <div id="listaTransacoes" class="transactions-list"></div>
+        </div>
+      </div>
+
+      <!-- CARTOES -->
+      <div class="page" id="page-cartoes">
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="abrirModal('modalCartao')">+ Novo Cartao</button>
+        </div>
+        <div class="cards-visual-grid" id="listaCartoes"></div>
+      </div>
+
+      <!-- CONTAS -->
+      <div class="page" id="page-contas">
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="abrirModal('modalConta')">+ Nova Conta</button>
+        </div>
+        <div class="accounts-grid" id="listaContas"></div>
+      </div>
+
+      <!-- METAS -->
+      <div class="page" id="page-metas">
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="abrirModal('modalMeta')">+ Nova Meta</button>
+        </div>
+        <div class="goals-grid" id="listaMetas"></div>
+      </div>
+
+      <!-- A PAGAR / RECEBER -->
+      <div class="page" id="page-pagar-receber">
+        <div class="filters-bar">
+          <button class="btn-tab active" onclick="filtrarContasPR('', this)">Todos</button>
+          <button class="btn-tab" onclick="filtrarContasPR('pagar', this)">A Pagar</button>
+          <button class="btn-tab" onclick="filtrarContasPR('receber', this)">A Receber</button>
+          <button class="btn btn-primary ml-auto" onclick="abrirModal('modalContaPR')">+ Adicionar</button>
+        </div>
+        <div class="section-card">
+          <div id="listaContasPR" class="transactions-list"></div>
+        </div>
+      </div>
+
+      <!-- RELATORIOS -->
+      <div class="page" id="page-relatorios">
+        <div class="charts-grid">
+          <div class="chart-card chart-full">
+            <div class="chart-header">
+              <h3 class="chart-title">Relatorio Anual</h3>
+              <select id="filtroAnoRelatorio" onchange="carregarRelatorios()" class="filter-select"></select>
+            </div>
+            <canvas id="chartRelatorioAnual"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- USUARIOS (admin only) -->
+      <div class="page" id="page-usuarios">
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="abrirModal('modalNovoUsuario')">+ Novo Usuario</button>
+        </div>
+        <div class="section-card">
+          <div id="listaUsuarios"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAIS -->
+
+  <!-- Modal Transacao -->
+  <div class="modal-overlay" id="modalTransacao">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Nova Transacao</h2>
+        <button onclick="fecharModal('modalTransacao')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="tipo-toggle">
+          <button class="tipo-btn active" id="btnReceita" onclick="setTipoTransacao('receita')">Receita</button>
+          <button class="tipo-btn" id="btnDespesa" onclick="setTipoTransacao('despesa')">Despesa</button>
+        </div>
+        <input type="hidden" id="tipoTransacao" value="receita">
+        <div class="form-group">
+          <label>Descricao *</label>
+          <input type="text" id="descricaoTransacao" class="form-input" placeholder="Ex: Salario de Janeiro">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor (R$) *</label>
+            <input type="number" id="valorTransacao" class="form-input" placeholder="0,00" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Data *</label>
+            <input type="date" id="dataTransacao" class="form-input">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="categoriaTransacao" class="form-input"></select>
+          </div>
+          <div class="form-group">
+            <label>Conta Bancaria</label>
+            <select id="contaTransacao" class="form-input"><option value="">Nenhuma</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cartao de Credito</label>
+            <select id="cartaoTransacao" class="form-input"><option value="">Nenhum</option></select>
+          </div>
+          <div class="form-group">
+            <label>Parcelas</label>
+            <select id="parcelasTransacao" class="form-input">
+              <option value="1">A vista</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+              <option value="4">4x</option>
+              <option value="6">6x</option>
+              <option value="10">10x</option>
+              <option value="12">12x</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observacoes</label>
+          <textarea id="obsTransacao" class="form-input" rows="2" placeholder="Opcional..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalTransacao')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="salvarTransacao()" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cartao -->
+  <div class="modal-overlay" id="modalCartao">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Novo Cartao de Credito</h2>
+        <button onclick="fecharModal('modalCartao')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome *</label>
+            <input type="text" id="nomeCartao" class="form-input" placeholder="Ex: Nubank">
+          </div>
+          <div class="form-group">
+            <label>Bandeira</label>
+            <select id="bandeiraCartao" class="form-input">
+              <option>Visa</option><option>Mastercard</option><option>Elo</option><option>American Express</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Limite (R$) *</label>
+          <input type="number" id="limiteCartao" class="form-input" step="0.01">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dia Fechamento *</label>
+            <input type="number" id="fechamentoCartao" class="form-input" min="1" max="31">
+          </div>
+          <div class="form-group">
+            <label>Dia Vencimento *</label>
+            <input type="number" id="vencimentoCartao" class="form-input" min="1" max="31">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input type="color" id="corCartao" class="form-input form-color" value="#1e293b">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalCartao')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="salvarCartao()" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Conta Bancaria -->
+  <div class="modal-overlay" id="modalConta">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Nova Conta</h2>
+        <button onclick="fecharModal('modalConta')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="nomeConta" class="form-input" placeholder="Ex: Conta Corrente Itau">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select id="tipoConta" class="form-input">
+              <option value="corrente">Conta Corrente</option>
+              <option value="poupanca">Poupanca</option>
+              <option value="carteira">Carteira</option>
+              <option value="investimento">Investimento</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Saldo Inicial (R$)</label>
+            <input type="number" id="saldoConta" class="form-input" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input type="color" id="corConta" class="form-input form-color" value="#6366f1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalConta')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="salvarConta()" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Meta -->
+  <div class="modal-overlay" id="modalMeta">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Nova Meta</h2>
+        <button onclick="fecharModal('modalMeta')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="nomeMeta" class="form-input" placeholder="Ex: Viagem">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor da Meta (R$) *</label>
+            <input type="number" id="valorMeta" class="form-input" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Valor Inicial (R$)</label>
+            <input type="number" id="valorAtualMeta" class="form-input" step="0.01">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Inicio *</label>
+            <input type="date" id="dataInicioMeta" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Prazo</label>
+            <input type="date" id="dataPrazoMeta" class="form-input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descricao</label>
+          <textarea id="descMeta" class="form-input" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input type="color" id="corMeta" class="form-input form-color" value="#10b981">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalMeta')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="salvarMeta()" class="btn btn-primary">Criar Meta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Conta PR -->
+  <div class="modal-overlay" id="modalContaPR">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Conta a Pagar / Receber</h2>
+        <button onclick="fecharModal('modalContaPR')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="tipo-toggle">
+          <button class="tipo-btn tipo-pagar active" id="btnPagar" onclick="setTipoPR('pagar')">A Pagar</button>
+          <button class="tipo-btn tipo-receber" id="btnReceber" onclick="setTipoPR('receber')">A Receber</button>
+        </div>
+        <input type="hidden" id="tipoPR" value="pagar">
+        <div class="form-group">
+          <label>Descricao *</label>
+          <input type="text" id="descPR" class="form-input">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor (R$) *</label>
+            <input type="number" id="valorPR" class="form-input" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Vencimento *</label>
+            <input type="date" id="vencimentoPR" class="form-input">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Numero de Parcelas</label>
+            <input type="number" id="parcelasPR" class="form-input" value="1" min="1" max="360">
+          </div>
+          <div class="form-group">
+            <label>Intervalo em dias</label>
+            <input type="number" id="intervaloPR" class="form-input" value="30" min="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observacoes</label>
+          <textarea id="obsPR" class="form-input" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalContaPR')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="salvarContaPR()" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Deposito Meta -->
+  <div class="modal-overlay" id="modalDeposito">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>Depositar na Meta</h2>
+        <button onclick="fecharModal('modalDeposito')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <p id="nomeMetaDeposito" class="text-muted mb-2"></p>
+        <input type="hidden" id="idMetaDeposito">
+        <div class="form-group">
+          <label>Valor (R$) *</label>
+          <input type="number" id="valorDeposito" class="form-input" step="0.01">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalDeposito')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="fazerDeposito()" class="btn btn-primary">Depositar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Novo Usuario -->
+  <div class="modal-overlay" id="modalNovoUsuario">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Novo Usuario</h2>
+        <button onclick="fecharModal('modalNovoUsuario')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="nomeNovoUsuario" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="emailNovoUsuario" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Senha *</label>
+          <input type="password" id="senhaNovoUsuario" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Perfil</label>
+          <select id="perfilNovoUsuario" class="form-input">
+            <option value="usuario">Usuario comum</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalNovoUsuario')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="salvarNovoUsuario()" class="btn btn-primary">Criar Usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Baixa Pagamento/Recebimento -->
+  <div class="modal-overlay" id="modalBaixa">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 id="tituloBaixa">Confirmar Pagamento</h2>
+        <button onclick="fecharModal('modalBaixa')" class="modal-close">x</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="idBaixa">
+        <input type="hidden" id="tipoBaixa">
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="dataBaixa" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Valor pago (R$)</label>
+          <input type="number" id="valorBaixa" class="form-input" step="0.01">
+        </div>
+        <div class="form-group">
+          <label id="labelContaBaixa">Conta debitada</label>
+          <select id="contaBaixa" class="form-input">
+            <option value="">Selecione a conta</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="fecharModal('modalBaixa')" class="btn btn-ghost">Cancelar</button>
+        <button onclick="confirmarBaixa()" class="btn btn-primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
